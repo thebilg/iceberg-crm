@@ -41,7 +41,7 @@ pnpm install
 
 ## Gelistirme
 
-Varsayilan olarak frontend, backend API'sini `http://localhost:3001` adresinde bekler.
+Varsayilan olarak frontend, backend API'sini `http://localhost:8080` adresinde bekler.
 
 Gelistirme sunucusunu baslatin:
 
@@ -52,7 +52,7 @@ npm run dev
 Farkli bir API adresi kullanmak icin ortam degiskeni tanimlayin:
 
 ```bash
-NUXT_PUBLIC_API_BASE=http://localhost:3001
+NUXT_PUBLIC_API_BASE=http://localhost:8080
 ```
 
 ## Komutlar
