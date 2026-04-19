@@ -1,64 +1,91 @@
-# Nuxt Starter Template
+# Iceberg CRM Frontend
 
-[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
+Nuxt 3 tabanli bu repo, gayrimenkul satis surecini gorsellestiren CRM arayuzunu icerir. Uygulama; evleri liste gorunumunde, danismanlari kart gorunumunde ve satislari kanban gorunumunde yonetir.
 
-Use this template to get started with [Nuxt UI](https://ui.nuxt.com) quickly.
+Bu repo sadece frontend uygulamasidir. Backend NestJS ve MongoDB servisi ayri bir repoda veya ayri bir calisma dizininde tutulabilir.
 
-- [Live demo](https://starter-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
+## Ozellikler
 
-<a href="https://starter-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png">
-    <img alt="Nuxt Starter Template" src="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png" width="830" height="466">
-  </picture>
-</a>
+- Solda sabit sidebar ile evler, danismanlar ve satislar ekranlari
+- Aktif sekme vurgusu
+- Evler icin tablo ve mobil kart gorunumu
+- Danismanlar icin kart gorunumu
+- Satislar icin asama bazli kanban panosu
+- Her ekranda sabit `+` butonu ile yeni kayit olusturma
+- API erisilemezse demo veri ile arayuzun calismaya devam etmesi
 
-> The starter template for Vue is on https://github.com/nuxt-ui-templates/starter-vue.
+## Teknolojiler
 
-## Quick Start
+- Nuxt 3
+- Vue 3
+- Pinia
+- Tailwind CSS 4
+- Nuxt UI
 
-```bash [Terminal]
-npm create nuxt@latest -- -t ui
+## Gereksinimler
+
+- Node.js LTS
+- npm veya pnpm
+
+## Kurulum
+
+```bash
+npm install
 ```
 
-## Deploy your own
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=starter&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fstarter&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fstarter-dark.png&demo-url=https%3A%2F%2Fstarter-template.nuxt.dev%2F&demo-title=Nuxt%20Starter%20Template&demo-description=A%20minimal%20template%20to%20get%20started%20with%20Nuxt%20UI.)
-
-## Setup
-
-Make sure to install the dependencies:
+Alternatif olarak:
 
 ```bash
 pnpm install
 ```
 
-## Development Server
+## Gelistirme
 
-Start the development server on `http://localhost:3000`:
+Varsayilan olarak frontend, backend API'sini `http://localhost:3001` adresinde bekler.
 
-```bash
-pnpm dev
-```
-
-## Production
-
-Build the application for production:
+Gelistirme sunucusunu baslatin:
 
 ```bash
-pnpm build
+npm run dev
 ```
 
-Locally preview production build:
+Farkli bir API adresi kullanmak icin ortam degiskeni tanimlayin:
 
 ```bash
-pnpm preview
+NUXT_PUBLIC_API_BASE=http://localhost:3001
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## Komutlar
 
-## Renovate integration
+```bash
+npm run dev
+npm run build
+npm run preview
+npm run lint
+npm run typecheck
+```
 
-Install [Renovate GitHub app](https://github.com/apps/renovate/installations/select_target) on your repository and you are good to go.
+## Beklenen Backend Endpointleri
+
+Frontend su endpointlerle haberlesir:
+
+- `GET /agents`
+- `POST /agents`
+- `GET /properties`
+- `POST /properties`
+- `GET /transactions`
+- `POST /transactions`
+- `PATCH /transactions/:id/stage`
+
+## Sayfa Yapisi
+
+- `/properties`: Evlerin liste ekrani
+- `/agents`: Danisman kartlari
+- `/sales`: Kanban satis panosu
+- `/`: Otomatik olarak `/properties` sayfasina yonlenir
+
+## Notlar
+
+- Backend bu repoda degildir.
+- API kapaliysa veya erisilemezse uygulama demo veri ile acilir.
+- Tasarim kararlarinin ayrintisi icin `DESIGN.md` dosyasina bakin.
