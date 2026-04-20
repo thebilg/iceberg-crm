@@ -61,6 +61,8 @@ interface CreateTransactionPayload {
 
 const buildId = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 10)}`
 
+const resolveTransactionAmount = (property: PropertyRecord | null, fallbackPrice: number) => Number(property?.price || fallbackPrice || 0)
+
 const normalizeAgent = (agent: Partial<AgentRecord> & { _id?: string }): AgentRecord => ({
   _id: String(agent._id || buildId('agent')),
   name: String(agent.name || 'Adsız danışman'),
@@ -69,7 +71,11 @@ const normalizeAgent = (agent: Partial<AgentRecord> & { _id?: string }): AgentRe
   totalEarnings: Number(agent.totalEarnings || 0)
 })
 
-const calculateCommission = (price: number, listingAgentId: string, sellingAgentId: string): CommissionBreakdown => {
+const calculateCommission = (price: number, listingAgentId?: string | null, sellingAgentId?: string | null): CommissionBreakdown | null => {
+  if (!listingAgentId || !sellingAgentId) {
+    return null
+  }
+
   const total = price * 0.05
   const agency = total * 0.5
 
@@ -101,9 +107,48 @@ export const useCrmStore = defineStore('crm', () => {
   const findAgent = (id: string) => agents.value.find(agent => agent._id === id) || null
   const findProperty = (id: string) => properties.value.find(property => property._id === id) || null
 
+  const syncPropertyStatus = (propertyId: string) => {
+    const property = findProperty(propertyId)
+
+    if (!property) {
+      return
+    }
+
+    const relatedTransactions = transactions.value.filter(transaction => transaction.propertyId?._id === propertyId)
+
+    if (relatedTransactions.some(transaction => transaction.stage === 'completed')) {
+      property.status = 'sold'
+      return
+    }
+
+    property.status = relatedTransactions.length ? 'in_transaction' : 'available'
+  }
+
+  const applyAgentEarnings = (
+    commission: CommissionBreakdown | null,
+    listingAgent: AgentRecord | null,
+    sellingAgent: AgentRecord | null,
+    factor: 1 | -1
+  ) => {
+    if (!commission) {
+      return
+    }
+
+    if (listingAgent) {
+      listingAgent.totalEarnings += commission.listingAgent * factor
+    }
+
+    if (sellingAgent && sellingAgent._id !== listingAgent?._id) {
+      sellingAgent.totalEarnings += commission.sellingAgent * factor
+    }
+  }
+
   const normalizeProperty = (property: any): PropertyRecord => {
     const listedBySource = property?.listedBy
     const listedById = typeof listedBySource === 'string' ? listedBySource : listedBySource?._id
+    const listedBy = listedById
+      ? findAgent(String(listedById)) || (listedBySource && typeof listedBySource === 'object' ? normalizeAgent(listedBySource) : null)
+      : (listedBySource && typeof listedBySource === 'object' ? normalizeAgent(listedBySource) : null)
 
     return {
       _id: String(property?._id || buildId('property')),
@@ -111,7 +156,7 @@ export const useCrmStore = defineStore('crm', () => {
       price: Number(property?.price || 0),
       city: String(property?.city || '-'),
       status: (property?.status || 'available') as PropertyRecord['status'],
-      listedBy: listedById ? findAgent(String(listedById)) : null
+      listedBy
     }
   }
 
@@ -119,15 +164,25 @@ export const useCrmStore = defineStore('crm', () => {
     const propertyId = typeof transaction?.propertyId === 'string' ? transaction.propertyId : transaction?.propertyId?._id
     const listingAgentId = typeof transaction?.listingAgentId === 'string' ? transaction.listingAgentId : transaction?.listingAgentId?._id
     const sellingAgentId = typeof transaction?.sellingAgentId === 'string' ? transaction.sellingAgentId : transaction?.sellingAgentId?._id
+    const property = propertyId ? findProperty(String(propertyId)) : null
+    const listingAgentSource = transaction?.listingAgentId
+    const sellingAgentSource = transaction?.sellingAgentId
+    const listingAgent = listingAgentId
+      ? findAgent(String(listingAgentId)) || (listingAgentSource && typeof listingAgentSource === 'object' ? normalizeAgent(listingAgentSource) : null)
+      : null
+    const sellingAgent = sellingAgentId
+      ? findAgent(String(sellingAgentId)) || (sellingAgentSource && typeof sellingAgentSource === 'object' ? normalizeAgent(sellingAgentSource) : null)
+      : null
+    const price = resolveTransactionAmount(property, Number(transaction?.price || 0))
 
     return {
       _id: String(transaction?._id || buildId('transaction')),
-      propertyId: propertyId ? findProperty(String(propertyId)) : null,
-      listingAgentId: listingAgentId ? findAgent(String(listingAgentId)) : null,
-      sellingAgentId: sellingAgentId ? findAgent(String(sellingAgentId)) : null,
-      price: Number(transaction?.price || 0),
+      propertyId: property,
+      listingAgentId: listingAgent,
+      sellingAgentId: sellingAgent,
+      price,
       stage: (transaction?.stage || 'agreement') as TransactionStage,
-      commission: transaction?.commission || null
+      commission: calculateCommission(price, listingAgent?._id, sellingAgent?._id)
     }
   }
 
@@ -228,29 +283,153 @@ export const useCrmStore = defineStore('crm', () => {
   }
 
   const createTransaction = async (api: ApiClient, payload: CreateTransactionPayload) => {
+    const property = findProperty(payload.propertyId)
+    const price = resolveTransactionAmount(property, payload.price)
+
     try {
-      const created = await api.post<any>('/transactions', payload)
+      const created = await api.post<any>('/transactions', {
+        ...payload,
+        price
+      })
       transactions.value.unshift(normalizeTransaction(created))
       notice.value = ''
+      if (property) {
+        syncPropertyStatus(property._id)
+      }
       return
     } catch {
       notice.value = 'API yazma işlemi başarısız oldu, kayıt yerel olarak eklendi.'
     }
-
-    const property = findProperty(payload.propertyId)
 
     transactions.value.unshift({
       _id: buildId('transaction'),
       propertyId: property,
       listingAgentId: findAgent(payload.listingAgentId),
       sellingAgentId: findAgent(payload.sellingAgentId),
-      price: payload.price,
+      price,
       stage: 'agreement',
-      commission: calculateCommission(payload.price, payload.listingAgentId, payload.sellingAgentId)
+      commission: calculateCommission(price, payload.listingAgentId, payload.sellingAgentId)
     })
 
     if (property) {
-      property.status = 'in_transaction'
+      syncPropertyStatus(property._id)
+    }
+  }
+
+  const deleteProperty = async (api: ApiClient, id: string) => {
+    const index = properties.value.findIndex(property => property._id === id)
+
+    if (index === -1) {
+      return
+    }
+
+    try {
+      await api.delete(`/properties/${id}`)
+      notice.value = ''
+    } catch {
+      notice.value = 'API silme işlemi başarısız oldu, kayıt arayüzden kaldırıldı.'
+    }
+
+    properties.value.splice(index, 1)
+    transactions.value = transactions.value.filter(transaction => transaction.propertyId?._id !== id)
+  }
+
+  const deleteAgent = async (api: ApiClient, id: string) => {
+    const index = agents.value.findIndex(agent => agent._id === id)
+
+    if (index === -1) {
+      return
+    }
+
+    try {
+      await api.delete(`/agents/${id}`)
+      notice.value = ''
+    } catch {
+      notice.value = 'API silme işlemi başarısız oldu, kayıt arayüzden kaldırıldı.'
+    }
+
+    agents.value.splice(index, 1)
+
+    properties.value = properties.value.map(property => {
+      if (property.listedBy?._id !== id) {
+        return property
+      }
+
+      return {
+        ...property,
+        listedBy: null
+      }
+    })
+
+    transactions.value = transactions.value.map(transaction => ({
+      ...transaction,
+      listingAgentId: transaction.listingAgentId?._id === id ? null : transaction.listingAgentId,
+      sellingAgentId: transaction.sellingAgentId?._id === id ? null : transaction.sellingAgentId
+    }))
+  }
+
+  const deleteTransaction = async (api: ApiClient, id: string) => {
+    const transaction = transactions.value.find(item => item._id === id)
+
+    if (!transaction) {
+      return
+    }
+
+    try {
+      await api.delete(`/transactions/${id}`)
+      notice.value = ''
+    } catch {
+      notice.value = 'API silme işlemi başarısız oldu, kayıt arayüzden kaldırıldı.'
+    }
+
+    if (transaction.stage === 'completed') {
+      applyAgentEarnings(transaction.commission, transaction.listingAgentId, transaction.sellingAgentId, -1)
+    }
+
+    transactions.value = transactions.value.filter(item => item._id !== id)
+
+    if (transaction.propertyId) {
+      syncPropertyStatus(transaction.propertyId._id)
+    }
+  }
+
+  const setTransactionStage = async (api: ApiClient, id: string, stage: TransactionStage) => {
+    const transaction = transactions.value.find(item => item._id === id)
+
+    if (!transaction || transaction.stage === stage) {
+      return
+    }
+
+    const previousStage = transaction.stage
+    const previousCommission = transaction.commission
+    const previousListingAgent = transaction.listingAgentId
+    const previousSellingAgent = transaction.sellingAgentId
+
+    try {
+      const updated = await api.patch<any>(`/transactions/${id}/stage`, { stage })
+      Object.assign(transaction, normalizeTransaction({ ...transaction, ...updated, stage }))
+      notice.value = ''
+    } catch {
+      transaction.stage = stage
+      transaction.price = resolveTransactionAmount(transaction.propertyId, transaction.price)
+      transaction.commission = calculateCommission(
+        transaction.price,
+        transaction.listingAgentId?._id,
+        transaction.sellingAgentId?._id
+      )
+      notice.value = 'Aşama güncellemesi API tarafında başarısız oldu, arayüz yerel olarak ilerletildi.'
+    }
+
+    if (previousStage !== 'completed' && transaction.stage === 'completed') {
+      applyAgentEarnings(transaction.commission, transaction.listingAgentId, transaction.sellingAgentId, 1)
+    }
+
+    if (previousStage === 'completed' && transaction.stage !== 'completed') {
+      applyAgentEarnings(previousCommission, previousListingAgent, previousSellingAgent, -1)
+    }
+
+    if (transaction.propertyId) {
+      syncPropertyStatus(transaction.propertyId._id)
     }
   }
 
@@ -267,30 +446,7 @@ export const useCrmStore = defineStore('crm', () => {
       return
     }
 
-    try {
-      const updated = await api.patch<any>(`/transactions/${id}/stage`, { stage: nextStage })
-      Object.assign(transaction, normalizeTransaction(updated))
-      notice.value = ''
-      return
-    } catch {
-      notice.value = 'Aşama güncellemesi API tarafında başarısız oldu, arayüz yerel olarak ilerletildi.'
-    }
-
-    transaction.stage = nextStage
-
-    if (transaction.propertyId) {
-      transaction.propertyId.status = nextStage === 'completed' ? 'sold' : 'in_transaction'
-    }
-
-    if (nextStage === 'completed' && transaction.commission) {
-      if (transaction.listingAgentId) {
-        transaction.listingAgentId.totalEarnings += transaction.commission.listingAgent
-      }
-
-      if (transaction.sellingAgentId && transaction.sellingAgentId._id !== transaction.listingAgentId?._id) {
-        transaction.sellingAgentId.totalEarnings += transaction.commission.sellingAgent
-      }
-    }
+    await setTransactionStage(api, id, nextStage)
   }
 
   return {
@@ -304,6 +460,10 @@ export const useCrmStore = defineStore('crm', () => {
     createAgent,
     createProperty,
     createTransaction,
+    deleteAgent,
+    deleteProperty,
+    deleteTransaction,
+    setTransactionStage,
     advanceTransaction
   }
 })

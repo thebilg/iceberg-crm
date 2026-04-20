@@ -11,6 +11,7 @@ export const useApi = () => {
   return {
     get: <T>(url: string) => $fetch<T>(buildUrl(url)),
     post: <T>(url: string, body: Record<string, any>) => $fetch<T>(buildUrl(url), { method: 'POST', body }),
-    patch: <T>(url: string, body: Record<string, any>) => $fetch<T>(buildUrl(url), { method: 'PATCH', body })
+    patch: <T>(url: string, body: Record<string, any>) => $fetch<T>(buildUrl(url), { method: 'PATCH', body }),
+    delete: <T>(url: string) => $fetch<T>(buildUrl(url), { method: 'DELETE' })
   }
 }

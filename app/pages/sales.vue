@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import SalesKanban from '~/components/sales/Kanban.vue'
 import Fab from '~/components/ui/Fab.vue'
+import { formatCurrency } from '~/composables/useCurrency'
 
 const api = useApi()
 const store = useCrmStore()
@@ -11,22 +12,29 @@ const showCreate = ref(false)
 const form = reactive({
   propertyId: '',
   listingAgentId: '',
-  sellingAgentId: '',
-  price: 0
+  sellingAgentId: ''
 })
+
+const selectedProperty = computed(() => store.properties.find(property => property._id === form.propertyId) || null)
+const transactionAmount = computed(() => selectedProperty.value?.price || 0)
+const autoListingAgent = computed(() => selectedProperty.value?.listedBy || null)
+const autoListingAgentName = computed(() => autoListingAgent.value?.name || '')
+
+watch(selectedProperty, property => {
+  form.listingAgentId = property?.listedBy?._id || ''
+}, { immediate: true })
 
 const submit = async () => {
   await store.createTransaction(api, {
     propertyId: form.propertyId,
     listingAgentId: form.listingAgentId,
     sellingAgentId: form.sellingAgentId,
-    price: form.price
+    price: transactionAmount.value
   })
 
   form.propertyId = ''
   form.listingAgentId = ''
   form.sellingAgentId = ''
-  form.price = 0
   showCreate.value = false
 }
 </script>
@@ -52,7 +60,12 @@ const submit = async () => {
       {{ store.notice }}
     </div>
 
-    <SalesKanban :transactions="store.transactions" @advance="store.advanceTransaction(api, $event)" />
+    <SalesKanban
+      :transactions="store.transactions"
+      @advance="store.advanceTransaction(api, $event)"
+      @delete="store.deleteTransaction(api, $event)"
+      @move="store.setTransactionStage(api, $event.id, $event.stage)"
+    />
 
     <Fab label="Yeni satış" @click="showCreate = true" />
 
@@ -80,12 +93,11 @@ const submit = async () => {
 
           <label>
             <span>Listeleyen danışman</span>
-            <select v-model="form.listingAgentId" required>
-              <option disabled value="">Danışman seçin</option>
-              <option v-for="agent in store.agents" :key="agent._id" :value="agent._id">
-                {{ agent.name }}
-              </option>
-            </select>
+            <input
+              :value="autoListingAgentName"
+              readonly
+              placeholder="Ev seçildiğinde otomatik gelir"
+            />
           </label>
 
           <label>
@@ -99,8 +111,8 @@ const submit = async () => {
           </label>
 
           <label>
-            <span>Fiyat</span>
-            <input v-model.number="form.price" required min="1" type="number" placeholder="750000" />
+            <span>Ev tutarı</span>
+            <input :value="transactionAmount ? formatCurrency(transactionAmount) : ''" readonly placeholder="Ev seçildiğinde otomatik gelir" />
           </label>
 
           <button type="submit" class="form-submit">Satışı oluştur</button>

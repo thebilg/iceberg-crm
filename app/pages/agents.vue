@@ -44,7 +44,7 @@ const submit = async () => {
       {{ store.notice }}
     </div>
 
-    <AgentCards :agents="store.agents" />
+    <AgentCards :agents="store.agents" @delete="store.deleteAgent(api, $event)" />
 
     <Fab label="Yeni danışman" @click="showCreate = true" />
 
@@ -62,12 +62,12 @@ const submit = async () => {
         <form class="form-grid" @submit.prevent="submit">
           <label>
             <span>Ad soyad</span>
-            <input v-model="form.name" required placeholder="Aylin Demir" />
+            <input v-model="form.name" required placeholder="Bilge Erdem" />
           </label>
 
           <label>
             <span>E-posta</span>
-            <input v-model="form.email" required type="email" placeholder="aylin@iceberg.com" />
+            <input v-model="form.email" required type="email" placeholder="bilge.erdem@iceberg.com" />
           </label>
 
           <label>

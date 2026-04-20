@@ -52,7 +52,7 @@ const submit = async () => {
       {{ store.notice }}
     </div>
 
-    <PropertiesTable :properties="store.properties" />
+    <PropertiesTable :properties="store.properties" @delete="store.deleteProperty(api, $event)" />
 
     <Fab label="Yeni ev" @click="showCreate = true" />
 

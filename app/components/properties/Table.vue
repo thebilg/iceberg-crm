@@ -6,6 +6,10 @@ defineProps<{
 	properties: PropertyRecord[]
 }>()
 
+defineEmits<{
+	delete: [id: string]
+}>()
+
 const statusLabels: Record<string, string> = {
 	available: 'Uygun',
 	in_transaction: 'İşlemde',
@@ -23,6 +27,7 @@ const statusLabels: Record<string, string> = {
 					<th>Fiyat</th>
 					<th>Durum</th>
 					<th>Danışman</th>
+					<th aria-label="Sil" />
 				</tr>
 			</thead>
 
@@ -39,14 +44,41 @@ const statusLabels: Record<string, string> = {
 						</span>
 					</td>
 					<td>{{ property.listedBy?.name || '-' }}</td>
+					<td>
+						<button type="button" class="record-delete" aria-label="Kaydı sil" @click="$emit('delete', property._id)">
+							<span class="record-delete__icon" aria-hidden="true">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9">
+									<path d="M9 3h6" />
+									<path d="M4 7h16" />
+									<path d="M6 7l1 13a1 1 0 0 0 1 .92h8a1 1 0 0 0 1-.92L18 7" />
+									<path d="M10 11v6" />
+									<path d="M14 11v6" />
+							</svg>
+							</span>
+						</button>
+					</td>
 				</tr>
 			</tbody>
 		</table>
 
 		<div class="properties-mobile-list">
 			<article v-for="property in properties" :key="`${property._id}-mobile`" class="property-mobile-card">
-				<div>
+				<div class="record-headline">
 					<p class="property-mobile-card__eyebrow">{{ property.city }}</p>
+					<button type="button" class="record-delete" aria-label="Kaydı sil" @click="$emit('delete', property._id)">
+						<span class="record-delete__icon" aria-hidden="true">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9">
+								<path d="M9 3h6" />
+								<path d="M4 7h16" />
+								<path d="M6 7l1 13a1 1 0 0 0 1 .92h8a1 1 0 0 0 1-.92L18 7" />
+								<path d="M10 11v6" />
+								<path d="M14 11v6" />
+							</svg>
+						</span>
+					</button>
+				</div>
+
+				<div>
 					<h3>{{ property.title }}</h3>
 				</div>
 
