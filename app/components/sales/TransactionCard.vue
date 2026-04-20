@@ -10,7 +10,7 @@ const props = defineProps<{
 defineEmits<{
 	advance: [id: string]
 	delete: [id: string]
-	dragstart: [id: string]
+	dragstart: [payload: { id: string, nextStage: string | null }]
 	dragend: []
 }>()
 
@@ -20,8 +20,10 @@ const isDragging = ref(false)
 const handleDragStart = (event: DragEvent) => {
 	isDragging.value = true
 	event.dataTransfer?.setData('text/plain', props.transaction._id)
-	event.dataTransfer?.setDragImage(event.currentTarget as Element, 32, 20)
-	event.dataTransfer!.effectAllowed = 'move'
+	event.dataTransfer?.setDragImage(event.currentTarget as HTMLElement, 32, 20)
+	if (event.dataTransfer) {
+		event.dataTransfer.effectAllowed = 'move'
+	}
 }
 
 const handleDragEnd = () => {
@@ -33,8 +35,8 @@ const handleDragEnd = () => {
 	<article
 		class="transaction-card"
 		:class="{ 'transaction-card--dragging': isDragging }"
-		draggable="true"
-		@dragstart="handleDragStart($event); $emit('dragstart', transaction._id)"
+		:draggable="Boolean(nextStage)"
+		@dragstart="handleDragStart($event); $emit('dragstart', { id: transaction._id, nextStage })"
 		@dragend="handleDragEnd(); $emit('dragend')"
 	>
 		<button type="button" class="record-delete record-delete--floating" aria-label="Kaydı sil" @click="$emit('delete', transaction._id)">

@@ -15,31 +15,36 @@ const emit = defineEmits<{
 }>()
 
 const stages = useStages()
-const draggingId = ref<string | null>(null)
+const dragging = ref<{ id: string, nextStage: TransactionStage | null } | null>(null)
 const dropStage = ref<TransactionStage | null>(null)
 
-const startDrag = (id: string) => {
-	draggingId.value = id
+const isAllowedDrop = (stage: TransactionStage) => dragging.value?.nextStage === stage
+
+const startDrag = (payload: { id: string, nextStage: string | null }) => {
+	dragging.value = {
+		id: payload.id,
+		nextStage: payload.nextStage as TransactionStage | null
+	}
 }
 
 const setDropStage = (stage: TransactionStage | null) => {
-	dropStage.value = stage
+	dropStage.value = stage && isAllowedDrop(stage) ? stage : null
 }
 
 const handleDrop = (stage: TransactionStage) => {
-	if (draggingId.value) {
+	if (dragging.value?.id && isAllowedDrop(stage)) {
 		emit('move', {
-			id: draggingId.value,
+			id: dragging.value.id,
 			stage
 		})
 	}
 
-	draggingId.value = null
+	dragging.value = null
 	dropStage.value = null
 }
 
 const handleDragEnd = () => {
-	draggingId.value = null
+	dragging.value = null
 	dropStage.value = null
 }
 
@@ -53,12 +58,19 @@ const itemsByStage = computed(() => {
 </script>
 
 <template>
-	<div class="kanban-grid">
+	<div class="kanban-grid" :class="{ 'kanban-grid--dragging': Boolean(dragging) }">
 		<section
 			v-for="column in itemsByStage"
 			:key="column.stage"
 			class="kanban-column"
-			:class="{ 'kanban-column--active': dropStage === column.stage }"
+			:class="{
+				'kanban-column--active': dropStage === column.stage,
+				'kanban-column--enabled': isAllowedDrop(column.stage)
+			}"
+			@dragenter.prevent="setDropStage(column.stage)"
+			@dragover.prevent="setDropStage(column.stage)"
+			@dragleave="setDropStage(dropStage === column.stage ? null : dropStage)"
+			@drop.prevent="handleDrop(column.stage)"
 		>
 			<header class="kanban-column__header">
 				<div>
@@ -69,13 +81,7 @@ const itemsByStage = computed(() => {
 				<span class="kanban-column__count">{{ column.items.length }}</span>
 			</header>
 
-			<div
-				class="kanban-column__body"
-				@dragenter.prevent="setDropStage(column.stage)"
-				@dragover.prevent="setDropStage(column.stage)"
-				@dragleave="setDropStage(dropStage === column.stage ? null : dropStage)"
-				@drop.prevent="handleDrop(column.stage)"
-			>
+			<div class="kanban-column__body">
 				<TransactionCard
 					v-for="transaction in column.items"
 					:key="transaction._id"

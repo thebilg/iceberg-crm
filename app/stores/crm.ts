@@ -96,6 +96,24 @@ const calculateCommission = (price: number, listingAgentId?: string | null, sell
   }
 }
 
+const resolveApiErrorMessage = (error: any, fallback: string) => {
+  const apiMessage = error?.data?.message
+
+  if (Array.isArray(apiMessage) && apiMessage.length) {
+    return apiMessage.join(' ')
+  }
+
+  if (typeof apiMessage === 'string' && apiMessage.trim()) {
+    return apiMessage
+  }
+
+  if (typeof error?.message === 'string' && error.message.trim()) {
+    return error.message
+  }
+
+  return fallback
+}
+
 export const useCrmStore = defineStore('crm', () => {
   const agents = ref<AgentRecord[]>([])
   const properties = ref<PropertyRecord[]>([])
@@ -186,43 +204,6 @@ export const useCrmStore = defineStore('crm', () => {
     }
   }
 
-  const seedDemoData = () => {
-    const aylin = normalizeAgent({ _id: 'agent-1', name: 'Aylin Demir', email: 'aylin@iceberg.com', phone: '+90 555 101 10 10', totalEarnings: 9200 })
-    const mert = normalizeAgent({ _id: 'agent-2', name: 'Mert Kaya', email: 'mert@iceberg.com', phone: '+90 555 202 20 20', totalEarnings: 6600 })
-    const selin = normalizeAgent({ _id: 'agent-3', name: 'Selin Aras', email: 'selin@iceberg.com', phone: '+90 555 303 30 30', totalEarnings: 12400 })
-
-    agents.value = [aylin, mert, selin]
-    properties.value = [
-      { _id: 'property-1', title: 'Suadiye Panoramik Dubleks', city: 'İstanbul', price: 875000, status: 'available', listedBy: aylin },
-      { _id: 'property-2', title: 'Çeşme Bahçe Villası', city: 'İzmir', price: 1290000, status: 'in_transaction', listedBy: mert },
-      { _id: 'property-3', title: 'Bodrum Marina Loft', city: 'Muğla', price: 940000, status: 'sold', listedBy: selin }
-    ]
-
-    transactions.value = [
-      {
-        _id: 'transaction-1',
-        propertyId: properties.value[1] || null,
-        listingAgentId: mert,
-        sellingAgentId: aylin,
-        price: 1290000,
-        stage: 'earnest_money',
-        commission: calculateCommission(1290000, mert._id, aylin._id)
-      },
-      {
-        _id: 'transaction-2',
-        propertyId: properties.value[2] || null,
-        listingAgentId: selin,
-        sellingAgentId: selin,
-        price: 940000,
-        stage: 'completed',
-        commission: calculateCommission(940000, selin._id, selin._id)
-      }
-    ]
-
-    notice.value = 'API ulaşılamadı, arayüz demo verisi ile çalışıyor.'
-    loaded.value = true
-  }
-
   const load = async (api: ApiClient) => {
     if (loaded.value || pending.value) {
       return
@@ -243,7 +224,11 @@ export const useCrmStore = defineStore('crm', () => {
       notice.value = ''
       loaded.value = true
     } catch {
-      seedDemoData()
+      agents.value = []
+      properties.value = []
+      transactions.value = []
+      notice.value = 'API ulaşılamadı. Veriler yüklenemedi.'
+      loaded.value = true
     } finally {
       pending.value = false
     }
@@ -255,11 +240,10 @@ export const useCrmStore = defineStore('crm', () => {
       agents.value.unshift(normalizeAgent(created))
       notice.value = ''
       return
-    } catch {
-      notice.value = 'API yazma işlemi başarısız oldu, kayıt yerel olarak eklendi.'
+    } catch (error) {
+      notice.value = resolveApiErrorMessage(error, 'Danışman oluşturulamadı. Backend kayıt işlemini tamamlamadı.')
+      return
     }
-
-    agents.value.unshift(normalizeAgent(payload))
   }
 
   const createProperty = async (api: ApiClient, payload: CreatePropertyPayload) => {
@@ -268,18 +252,10 @@ export const useCrmStore = defineStore('crm', () => {
       properties.value.unshift(normalizeProperty(created))
       notice.value = ''
       return
-    } catch {
-      notice.value = 'API yazma işlemi başarısız oldu, kayıt yerel olarak eklendi.'
+    } catch (error) {
+      notice.value = resolveApiErrorMessage(error, 'Ev oluşturulamadı. Backend kayıt işlemini tamamlamadı.')
+      return
     }
-
-    properties.value.unshift({
-      _id: buildId('property'),
-      title: payload.title,
-      city: payload.city,
-      price: payload.price,
-      status: 'available',
-      listedBy: findAgent(payload.listedBy)
-    })
   }
 
   const createTransaction = async (api: ApiClient, payload: CreateTransactionPayload) => {
@@ -297,22 +273,9 @@ export const useCrmStore = defineStore('crm', () => {
         syncPropertyStatus(property._id)
       }
       return
-    } catch {
-      notice.value = 'API yazma işlemi başarısız oldu, kayıt yerel olarak eklendi.'
-    }
-
-    transactions.value.unshift({
-      _id: buildId('transaction'),
-      propertyId: property,
-      listingAgentId: findAgent(payload.listingAgentId),
-      sellingAgentId: findAgent(payload.sellingAgentId),
-      price,
-      stage: 'agreement',
-      commission: calculateCommission(price, payload.listingAgentId, payload.sellingAgentId)
-    })
-
-    if (property) {
-      syncPropertyStatus(property._id)
+    } catch (error) {
+      notice.value = resolveApiErrorMessage(error, 'Satış oluşturulamadı. Backend kayıt işlemini tamamlamadı.')
+      return
     }
   }
 
@@ -326,8 +289,8 @@ export const useCrmStore = defineStore('crm', () => {
     try {
       await api.delete(`/properties/${id}`)
       notice.value = ''
-    } catch {
-      notice.value = 'Ev silinemedi. Backend silme isteğini tamamlamadı.'
+    } catch (error) {
+      notice.value = resolveApiErrorMessage(error, 'Ev silinemedi. Backend silme isteğini tamamlamadı.')
       return
     }
 
@@ -345,8 +308,8 @@ export const useCrmStore = defineStore('crm', () => {
     try {
       await api.delete(`/agents/${id}`)
       notice.value = ''
-    } catch {
-      notice.value = 'Danışman silinemedi. Backend silme isteğini tamamlamadı.'
+    } catch (error) {
+      notice.value = resolveApiErrorMessage(error, 'Danışman silinemedi. Backend silme isteğini tamamlamadı.')
       return
     }
 
@@ -380,8 +343,8 @@ export const useCrmStore = defineStore('crm', () => {
     try {
       await api.delete(`/transactions/${id}`)
       notice.value = ''
-    } catch {
-      notice.value = 'Satış silinemedi. Backend silme isteğini tamamlamadı.'
+    } catch (error) {
+      notice.value = resolveApiErrorMessage(error, 'Satış silinemedi. Backend silme isteğini tamamlamadı.')
       return
     }
 
@@ -403,6 +366,11 @@ export const useCrmStore = defineStore('crm', () => {
       return
     }
 
+    if (stage === 'completed' && (!transaction.listingAgentId || !transaction.sellingAgentId)) {
+      notice.value = 'İşlem tamamlanamıyor. Tamamlandı adımı için listeleyen ve satan danışman kayıtları eksiksiz olmalı.'
+      return
+    }
+
     const previousStage = transaction.stage
     const previousCommission = transaction.commission
     const previousListingAgent = transaction.listingAgentId
@@ -412,15 +380,14 @@ export const useCrmStore = defineStore('crm', () => {
       const updated = await api.patch<any>(`/transactions/${id}/stage`, { stage })
       Object.assign(transaction, normalizeTransaction({ ...transaction, ...updated, stage }))
       notice.value = ''
-    } catch {
-      transaction.stage = stage
-      transaction.price = resolveTransactionAmount(transaction.propertyId, transaction.price)
-      transaction.commission = calculateCommission(
-        transaction.price,
-        transaction.listingAgentId?._id,
-        transaction.sellingAgentId?._id
+    } catch (error) {
+      notice.value = resolveApiErrorMessage(
+        error,
+        stage === 'completed'
+        ? 'İşlem tamamlanamadı. Tamamlandı adımında komisyon hesaplaması yapıldığı için satıştaki danışman kayıtları backend tarafında geçerli olmalı.'
+        : 'İşlem yapılamadı. Satışları yalnızca tek tek, bir sonraki aşamaya ilerletebilirsin.'
       )
-      notice.value = 'Aşama güncellemesi API tarafında başarısız oldu, arayüz yerel olarak ilerletildi.'
+      return
     }
 
     if (previousStage !== 'completed' && transaction.stage === 'completed') {

@@ -430,10 +430,18 @@ textarea {
   align-items: start;
 }
 
+.kanban-grid--dragging .transaction-card:not(.transaction-card--dragging) {
+  pointer-events: none;
+}
+
 .kanban-column {
   border-radius: 1.6rem;
   padding: 1rem;
   transition: 160ms ease;
+}
+
+.kanban-column--enabled {
+  border-color: rgba(124, 58, 237, 0.14);
 }
 
 .kanban-column--active {
@@ -493,6 +501,10 @@ textarea {
   padding: 1rem;
   cursor: grab;
   transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+
+.transaction-card[draggable='false'] {
+  cursor: default;
 }
 
 .transaction-card:active {
