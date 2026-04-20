@@ -15,6 +15,13 @@ defineEmits<{
 }>()
 
 const nextStage = computed(() => getNextStage(props.transaction.stage))
+const sameAgentHandlesBothSides = computed(() => {
+	return Boolean(
+		props.transaction.listingAgentId &&
+		props.transaction.sellingAgentId &&
+		props.transaction.listingAgentId._id === props.transaction.sellingAgentId._id
+	)
+})
 const isDragging = ref(false)
 
 const handleDragStart = (event: DragEvent) => {
@@ -75,10 +82,18 @@ const handleDragEnd = () => {
 			<p class="transaction-card__commission-title">
 				Beklenen komisyon dağılımı
 			</p>
+			<p v-if="sameAgentHandlesBothSides" class="transaction-card__commission-note">
+				Listeleyen ve satan danışman aynı kişi olduğu için toplam komisyonun %50'sini alır.
+			</p>
 			<span>Toplam komisyon: {{ formatCurrency(transaction.commission.total) }}</span>
 			<span>Ajans payı: {{ formatCurrency(transaction.commission.agency) }}</span>
-			<span>Listeleyen kazancı: {{ formatCurrency(transaction.commission.listingAgent) }}</span>
-			<span>Satan kazancı: {{ formatCurrency(transaction.commission.sellingAgent) }}</span>
+			<span v-if="sameAgentHandlesBothSides">
+				Listeleyen ve satan kazancı: {{ formatCurrency(transaction.commission.listingAgent) }}
+			</span>
+			<template v-else>
+				<span>Listeleyen kazancı: {{ formatCurrency(transaction.commission.listingAgent) }}</span>
+				<span>Satan kazancı: {{ formatCurrency(transaction.commission.sellingAgent) }}</span>
+			</template>
 		</div>
 
 		<button
@@ -95,10 +110,18 @@ const handleDragEnd = () => {
 			<p class="transaction-card__settlement-text">
 				{{ formatCurrency(transaction.price) }} tutarındaki satış için sabit %5 komisyon işlendi.
 			</p>
+			<p v-if="sameAgentHandlesBothSides" class="transaction-card__settlement-text">
+				Listeleyen ve satan danışman aynı kişi olduğu için toplam komisyonun %50'si bu danışmana yazıldı.
+			</p>
 			<div class="transaction-card__settlement-grid">
 				<span>Ajans: {{ formatCurrency(transaction.commission.agency) }}</span>
-				<span>Listeleyen: {{ formatCurrency(transaction.commission.listingAgent) }}</span>
-				<span>Satan: {{ formatCurrency(transaction.commission.sellingAgent) }}</span>
+				<span v-if="sameAgentHandlesBothSides">
+					Listeleyen ve satan kazancı: {{ formatCurrency(transaction.commission.listingAgent) }}
+				</span>
+				<template v-else>
+					<span>Listeleyen: {{ formatCurrency(transaction.commission.listingAgent) }}</span>
+					<span>Satan: {{ formatCurrency(transaction.commission.sellingAgent) }}</span>
+				</template>
 			</div>
 		</div>
 

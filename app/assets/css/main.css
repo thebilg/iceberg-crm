@@ -551,6 +551,13 @@ textarea {
   font-weight: 700;
 }
 
+.transaction-card__commission-note {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.81rem;
+  line-height: 1.5;
+}
+
 .transaction-card__action,
 .form-submit,
 .modal-card__close,

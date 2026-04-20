@@ -15,10 +15,20 @@ const form = reactive({
   sellingAgentId: ''
 })
 
+const availableProperties = computed(() => {
+  return store.properties.filter(property => property.status === 'available')
+})
+
 const selectedProperty = computed(() => store.properties.find(property => property._id === form.propertyId) || null)
 const transactionAmount = computed(() => selectedProperty.value?.price || 0)
 const autoListingAgent = computed(() => selectedProperty.value?.listedBy || null)
 const autoListingAgentName = computed(() => autoListingAgent.value?.name || '')
+
+watch(availableProperties, properties => {
+  if (form.propertyId && !properties.some(property => property._id === form.propertyId)) {
+    form.propertyId = ''
+  }
+}, { immediate: true })
 
 watch(selectedProperty, property => {
   form.listingAgentId = property?.listedBy?._id || ''
@@ -83,12 +93,13 @@ const submit = async () => {
         <form class="form-grid" @submit.prevent="submit">
           <label>
             <span>Ev</span>
-            <select v-model="form.propertyId" required>
-              <option disabled value="">Ev seçin</option>
-              <option v-for="property in store.properties" :key="property._id" :value="property._id">
+            <select v-model="form.propertyId" :disabled="!availableProperties.length" required>
+              <option disabled value="">{{ availableProperties.length ? 'Ev seçin' : 'Uygun ev yok' }}</option>
+              <option v-for="property in availableProperties" :key="property._id" :value="property._id">
                 {{ property.title }}
               </option>
             </select>
+            <small>Yalnızca henüz işleme alınmamış ve satılmamış evler listelenir.</small>
           </label>
 
           <label>
@@ -115,7 +126,7 @@ const submit = async () => {
             <input :value="transactionAmount ? formatCurrency(transactionAmount) : ''" readonly placeholder="Ev seçildiğinde otomatik gelir" />
           </label>
 
-          <button type="submit" class="form-submit">Satışı oluştur</button>
+          <button type="submit" class="form-submit" :disabled="!availableProperties.length">Satışı oluştur</button>
         </form>
       </div>
     </div>
