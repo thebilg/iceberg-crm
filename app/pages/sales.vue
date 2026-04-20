@@ -35,15 +35,15 @@ const submit = async () => {
   <section class="page-shell">
     <header class="page-header">
       <div>
-        <p class="page-header__eyebrow">Satis panosu</p>
+        <p class="page-header__eyebrow">Satış panosu</p>
         <h1>Satışlar</h1>
         <p class="page-header__description">
-          Anlasmadan tamamlanmaya kadar tum satislari kanban uzerinden yonet ve komisyon dagilimini gor.
+          Anlaşmadan tamamlanmaya kadar tüm satışları kanban üzerinden yönet ve komisyon dağılımını gör.
         </p>
       </div>
 
       <div class="page-stat">
-        <span>Toplam islem</span>
+        <span>Toplam işlem</span>
         <strong>{{ store.transactions.length }}</strong>
       </div>
     </header>
@@ -54,14 +54,14 @@ const submit = async () => {
 
     <SalesKanban :transactions="store.transactions" @advance="store.advanceTransaction(api, $event)" />
 
-    <Fab label="Yeni satis" @click="showCreate = true" />
+    <Fab label="Yeni satış" @click="showCreate = true" />
 
     <div v-if="showCreate" class="modal-backdrop" @click.self="showCreate = false">
       <div class="modal-card">
         <div class="modal-card__header">
           <div>
-            <p class="page-header__eyebrow">Olustur</p>
-            <h2>Yeni satis ekle</h2>
+            <p class="page-header__eyebrow">Oluştur</p>
+            <h2>Yeni satış ekle</h2>
           </div>
 
           <button type="button" class="modal-card__close" @click="showCreate = false">Kapat</button>
@@ -71,7 +71,7 @@ const submit = async () => {
           <label>
             <span>Ev</span>
             <select v-model="form.propertyId" required>
-              <option disabled value="">Ev secin</option>
+              <option disabled value="">Ev seçin</option>
               <option v-for="property in store.properties" :key="property._id" :value="property._id">
                 {{ property.title }}
               </option>
@@ -79,9 +79,9 @@ const submit = async () => {
           </label>
 
           <label>
-            <span>Listeleyen danisman</span>
+            <span>Listeleyen danışman</span>
             <select v-model="form.listingAgentId" required>
-              <option disabled value="">Danisman secin</option>
+              <option disabled value="">Danışman seçin</option>
               <option v-for="agent in store.agents" :key="agent._id" :value="agent._id">
                 {{ agent.name }}
               </option>
@@ -89,9 +89,9 @@ const submit = async () => {
           </label>
 
           <label>
-            <span>Satan danisman</span>
+            <span>Satışı yapan danışman</span>
             <select v-model="form.sellingAgentId" required>
-              <option disabled value="">Danisman secin</option>
+              <option disabled value="">Danışman seçin</option>
               <option v-for="agent in store.agents" :key="agent._id" :value="agent._id">
                 {{ agent.name }}
               </option>
@@ -103,7 +103,7 @@ const submit = async () => {
             <input v-model.number="form.price" required min="1" type="number" placeholder="750000" />
           </label>
 
-          <button type="submit" class="form-submit">Satisi olustur</button>
+          <button type="submit" class="form-submit">Satışı oluştur</button>
         </form>
       </div>
     </div>

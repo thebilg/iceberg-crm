@@ -63,7 +63,7 @@ const buildId = (prefix: string) => `${prefix}-${Math.random().toString(36).slic
 
 const normalizeAgent = (agent: Partial<AgentRecord> & { _id?: string }): AgentRecord => ({
   _id: String(agent._id || buildId('agent')),
-  name: String(agent.name || 'Adsiz danisman'),
+  name: String(agent.name || 'Adsız danışman'),
   email: String(agent.email || '-'),
   phone: String(agent.phone || '-'),
   totalEarnings: Number(agent.totalEarnings || 0)
@@ -107,7 +107,7 @@ export const useCrmStore = defineStore('crm', () => {
 
     return {
       _id: String(property?._id || buildId('property')),
-      title: String(property?.title || 'Adsiz ilan'),
+      title: String(property?.title || 'Adsız ilan'),
       price: Number(property?.price || 0),
       city: String(property?.city || '-'),
       status: (property?.status || 'available') as PropertyRecord['status'],
@@ -138,9 +138,9 @@ export const useCrmStore = defineStore('crm', () => {
 
     agents.value = [aylin, mert, selin]
     properties.value = [
-      { _id: 'property-1', title: 'Suadiye Panoramik Dubleks', city: 'Istanbul', price: 875000, status: 'available', listedBy: aylin },
-      { _id: 'property-2', title: 'Cesme Bahce Villasi', city: 'Izmir', price: 1290000, status: 'in_transaction', listedBy: mert },
-      { _id: 'property-3', title: 'Bodrum Marina Loft', city: 'Mugla', price: 940000, status: 'sold', listedBy: selin }
+      { _id: 'property-1', title: 'Suadiye Panoramik Dubleks', city: 'İstanbul', price: 875000, status: 'available', listedBy: aylin },
+      { _id: 'property-2', title: 'Çeşme Bahçe Villası', city: 'İzmir', price: 1290000, status: 'in_transaction', listedBy: mert },
+      { _id: 'property-3', title: 'Bodrum Marina Loft', city: 'Muğla', price: 940000, status: 'sold', listedBy: selin }
     ]
 
     transactions.value = [
@@ -164,7 +164,7 @@ export const useCrmStore = defineStore('crm', () => {
       }
     ]
 
-    notice.value = 'API ulasilamadi, arayuz demo verisi ile calisiyor.'
+    notice.value = 'API ulaşılamadı, arayüz demo verisi ile çalışıyor.'
     loaded.value = true
   }
 
@@ -201,7 +201,7 @@ export const useCrmStore = defineStore('crm', () => {
       notice.value = ''
       return
     } catch {
-      notice.value = 'API yazma islemi basarisiz oldu, kayit yerel olarak eklendi.'
+      notice.value = 'API yazma işlemi başarısız oldu, kayıt yerel olarak eklendi.'
     }
 
     agents.value.unshift(normalizeAgent(payload))
@@ -214,7 +214,7 @@ export const useCrmStore = defineStore('crm', () => {
       notice.value = ''
       return
     } catch {
-      notice.value = 'API yazma islemi basarisiz oldu, kayit yerel olarak eklendi.'
+      notice.value = 'API yazma işlemi başarısız oldu, kayıt yerel olarak eklendi.'
     }
 
     properties.value.unshift({
@@ -234,7 +234,7 @@ export const useCrmStore = defineStore('crm', () => {
       notice.value = ''
       return
     } catch {
-      notice.value = 'API yazma islemi basarisiz oldu, kayit yerel olarak eklendi.'
+      notice.value = 'API yazma işlemi başarısız oldu, kayıt yerel olarak eklendi.'
     }
 
     const property = findProperty(payload.propertyId)
@@ -273,7 +273,7 @@ export const useCrmStore = defineStore('crm', () => {
       notice.value = ''
       return
     } catch {
-      notice.value = 'Asama guncellemesi API tarafinda basarisiz oldu, arayuz yerel olarak ilerletildi.'
+      notice.value = 'Aşama güncellemesi API tarafında başarısız oldu, arayüz yerel olarak ilerletildi.'
     }
 
     transaction.stage = nextStage

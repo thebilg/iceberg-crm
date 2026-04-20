@@ -35,10 +35,10 @@ const submit = async () => {
   <section class="page-shell">
     <header class="page-header">
       <div>
-        <p class="page-header__eyebrow">Portfoy listesi</p>
+        <p class="page-header__eyebrow">Portföy listesi</p>
         <h1>Evler</h1>
         <p class="page-header__description">
-          Tum portfoyu tek listede gor, durumu izle ve yeni evleri tek tusla ekle.
+          Tüm portföyü tek listede gör, durumu izle ve yeni evleri tek tuşla ekle.
         </p>
       </div>
 
@@ -60,7 +60,7 @@ const submit = async () => {
       <div class="modal-card">
         <div class="modal-card__header">
           <div>
-            <p class="page-header__eyebrow">Olustur</p>
+            <p class="page-header__eyebrow">Oluştur</p>
             <h2>Yeni ev ekle</h2>
           </div>
 
@@ -69,13 +69,13 @@ const submit = async () => {
 
         <form class="form-grid" @submit.prevent="submit">
           <label>
-            <span>Baslik</span>
-            <input v-model="form.title" required placeholder="Deniz manzarali rezidans" />
+            <span>Başlık</span>
+            <input v-model="form.title" required placeholder="Deniz manzaralı rezidans" />
           </label>
 
           <label>
-            <span>Sehir</span>
-            <input v-model="form.city" required placeholder="Istanbul" />
+            <span>Şehir</span>
+            <input v-model="form.city" required placeholder="İstanbul" />
           </label>
 
           <label>
@@ -84,16 +84,16 @@ const submit = async () => {
           </label>
 
           <label>
-            <span>Danisman</span>
+            <span>Danışman</span>
             <select v-model="form.listedBy" required>
-              <option disabled value="">Danisman secin</option>
+              <option disabled value="">Danışman seçin</option>
               <option v-for="agent in store.agents" :key="agent._id" :value="agent._id">
                 {{ agent.name }}
               </option>
             </select>
           </label>
 
-          <button type="submit" class="form-submit">Evi olustur</button>
+          <button type="submit" class="form-submit">Evi oluştur</button>
         </form>
       </div>
     </div>

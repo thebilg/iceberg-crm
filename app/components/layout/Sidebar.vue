@@ -9,13 +9,13 @@ const items = [
     badge: '01'
   },
   {
-    label: 'Danismanlar',
+    label: 'Danışmanlar',
     to: '/agents',
     eyebrow: 'Kartlar',
     badge: '02'
   },
   {
-    label: 'Satislar',
+    label: 'Satışlar',
     to: '/sales',
     eyebrow: 'Kanban',
     badge: '03'
@@ -52,9 +52,9 @@ const isActive = (path: string) => route.path === path
     </nav>
 
     <div class="sidebar__footer">
-      <p class="sidebar__eyebrow">Akis</p>
+      <p class="sidebar__eyebrow">Akış</p>
       <p class="sidebar__footer-text">
-        Sozlesmeden tapuya kadar tum satis akisini tek panelden yonet.
+        Sözleşmeden tapuya kadar tüm satış akışını tek panelden yönet.
       </p>
     </div>
   </aside>

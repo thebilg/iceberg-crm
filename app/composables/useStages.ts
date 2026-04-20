@@ -8,10 +8,10 @@ export const stageOrder = [
 export type TransactionStage = typeof stageOrder[number]
 
 export const stageLabels: Record<TransactionStage, string> = {
-	agreement: 'Anlasma',
+	agreement: 'Anlaşma',
 	earnest_money: 'Kapora',
 	title_deed: 'Tapu',
-	completed: 'Tamamlandi'
+	completed: 'Tamamlandı'
 }
 
 export const useStages = () => stageOrder

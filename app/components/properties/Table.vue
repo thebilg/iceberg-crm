@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PropertyRecord } from '~/stores/crm'
+import { formatCurrency } from '~/composables/useCurrency'
 
 defineProps<{
 	properties: PropertyRecord[]
@@ -7,8 +8,8 @@ defineProps<{
 
 const statusLabels: Record<string, string> = {
 	available: 'Uygun',
-	in_transaction: 'Islemde',
-	sold: 'Satildi'
+	in_transaction: 'İşlemde',
+	sold: 'Satıldı'
 }
 </script>
 
@@ -17,11 +18,11 @@ const statusLabels: Record<string, string> = {
 		<table class="properties-table">
 			<thead>
 				<tr>
-					<th>Baslik</th>
-					<th>Sehir</th>
+					<th>Başlık</th>
+					<th>Şehir</th>
 					<th>Fiyat</th>
 					<th>Durum</th>
-					<th>Danisman</th>
+					<th>Danışman</th>
 				</tr>
 			</thead>
 
@@ -31,7 +32,7 @@ const statusLabels: Record<string, string> = {
 						<strong>{{ property.title }}</strong>
 					</td>
 					<td>{{ property.city }}</td>
-					<td>${{ property.price.toLocaleString('en-US') }}</td>
+					<td>{{ formatCurrency(property.price) }}</td>
 					<td>
 						<span class="status-chip" :data-status="property.status">
 							{{ statusLabels[property.status] || property.status }}
@@ -49,11 +50,11 @@ const statusLabels: Record<string, string> = {
 					<h3>{{ property.title }}</h3>
 				</div>
 
-				<strong>${{ property.price.toLocaleString('en-US') }}</strong>
+				<strong>{{ formatCurrency(property.price) }}</strong>
 				<span class="status-chip" :data-status="property.status">
 					{{ statusLabels[property.status] || property.status }}
 				</span>
-				<p>{{ property.listedBy?.name || 'Danisman atanamadi' }}</p>
+				<p>{{ property.listedBy?.name || 'Danışman atanamadı' }}</p>
 			</article>
 		</div>
 	</div>

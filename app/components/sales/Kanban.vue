@@ -27,7 +27,7 @@ const itemsByStage = computed(() => {
 		<section v-for="column in itemsByStage" :key="column.stage" class="kanban-column">
 			<header class="kanban-column__header">
 				<div>
-					<p class="kanban-column__eyebrow">Asama</p>
+					<p class="kanban-column__eyebrow">Aşama</p>
 					<h2>{{ column.label }}</h2>
 				</div>
 
@@ -43,7 +43,7 @@ const itemsByStage = computed(() => {
 				/>
 
 				<p v-if="!column.items.length" class="kanban-column__empty">
-					Bu asamada kayit yok.
+					Bu aşamada kayıt yok.
 				</p>
 			</div>
 		</section>

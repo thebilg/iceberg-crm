@@ -27,15 +27,15 @@ const submit = async () => {
   <section class="page-shell">
     <header class="page-header">
       <div>
-        <p class="page-header__eyebrow">Ekip kartlari</p>
-        <h1>Danismanlar</h1>
+        <p class="page-header__eyebrow">Ekip kartları</p>
+        <h1>Danışmanlar</h1>
         <p class="page-header__description">
-          Tum danismanlari kart yapisinda goruntule, iletisim bilgilerini ve kazancini tek ekranda takip et.
+          Tüm danışmanları kart yapısında görüntüle, iletişim bilgilerini ve kazançlarını tek ekranda takip et.
         </p>
       </div>
 
       <div class="page-stat">
-        <span>Aktif kisi</span>
+        <span>Aktif kişi</span>
         <strong>{{ store.agents.length }}</strong>
       </div>
     </header>
@@ -46,14 +46,14 @@ const submit = async () => {
 
     <AgentCards :agents="store.agents" />
 
-    <Fab label="Yeni danisman" @click="showCreate = true" />
+    <Fab label="Yeni danışman" @click="showCreate = true" />
 
     <div v-if="showCreate" class="modal-backdrop" @click.self="showCreate = false">
       <div class="modal-card">
         <div class="modal-card__header">
           <div>
-            <p class="page-header__eyebrow">Olustur</p>
-            <h2>Yeni danisman ekle</h2>
+            <p class="page-header__eyebrow">Oluştur</p>
+            <h2>Yeni danışman ekle</h2>
           </div>
 
           <button type="button" class="modal-card__close" @click="showCreate = false">Kapat</button>
@@ -75,7 +75,7 @@ const submit = async () => {
             <input v-model="form.phone" required placeholder="+90 555 000 00 00" />
           </label>
 
-          <button type="submit" class="form-submit">Danismani olustur</button>
+          <button type="submit" class="form-submit">Danışmanı oluştur</button>
         </form>
       </div>
     </div>

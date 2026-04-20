@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AgentRecord } from '~/stores/crm'
+import { formatCurrency } from '~/composables/useCurrency'
 
 defineProps<{
 	agents: AgentRecord[]
@@ -11,7 +12,7 @@ defineProps<{
 		<article v-for="agent in agents" :key="agent._id" class="agent-card">
 			<div class="agent-card__top">
 				<div>
-					<p class="agent-card__eyebrow">Danisman</p>
+					<p class="agent-card__eyebrow">Danışman</p>
 					<h3>{{ agent.name }}</h3>
 				</div>
 
@@ -33,8 +34,8 @@ defineProps<{
 			</dl>
 
 			<div class="agent-card__earnings">
-				<span>Toplam kazanc</span>
-				<strong>${{ agent.totalEarnings.toLocaleString('en-US') }}</strong>
+				<span>Toplam kazanç</span>
+				<strong>{{ formatCurrency(agent.totalEarnings) }}</strong>
 			</div>
 		</article>
 	</div>
