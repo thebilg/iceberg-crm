@@ -327,7 +327,8 @@ export const useCrmStore = defineStore('crm', () => {
       await api.delete(`/properties/${id}`)
       notice.value = ''
     } catch {
-      notice.value = 'API silme işlemi başarısız oldu, kayıt arayüzden kaldırıldı.'
+      notice.value = 'Ev silinemedi. Backend silme isteğini tamamlamadı.'
+      return
     }
 
     properties.value.splice(index, 1)
@@ -345,7 +346,8 @@ export const useCrmStore = defineStore('crm', () => {
       await api.delete(`/agents/${id}`)
       notice.value = ''
     } catch {
-      notice.value = 'API silme işlemi başarısız oldu, kayıt arayüzden kaldırıldı.'
+      notice.value = 'Danışman silinemedi. Backend silme isteğini tamamlamadı.'
+      return
     }
 
     agents.value.splice(index, 1)
@@ -379,7 +381,8 @@ export const useCrmStore = defineStore('crm', () => {
       await api.delete(`/transactions/${id}`)
       notice.value = ''
     } catch {
-      notice.value = 'API silme işlemi başarısız oldu, kayıt arayüzden kaldırıldı.'
+      notice.value = 'Satış silinemedi. Backend silme isteğini tamamlamadı.'
+      return
     }
 
     if (transaction.stage === 'completed') {

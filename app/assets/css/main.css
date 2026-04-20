@@ -189,6 +189,7 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  padding-bottom: 7rem;
 }
 
 .page-header {
@@ -759,6 +760,10 @@ textarea {
 @media (max-width: 720px) {
   .app-main {
     padding: 1.25rem;
+  }
+
+  .page-shell {
+    padding-bottom: 6rem;
   }
 
   .agents-grid,

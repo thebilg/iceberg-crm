@@ -69,9 +69,9 @@ const handleDragEnd = () => {
 			</div>
 		</dl>
 
-		<div v-if="transaction.commission" class="transaction-card__commission">
+		<div v-if="transaction.commission && transaction.stage !== 'completed'" class="transaction-card__commission">
 			<p class="transaction-card__commission-title">
-				{{ transaction.stage === 'completed' ? 'Gerçekleşen komisyon dağılımı' : 'Beklenen komisyon dağılımı' }}
+				Beklenen komisyon dağılımı
 			</p>
 			<span>Toplam komisyon: {{ formatCurrency(transaction.commission.total) }}</span>
 			<span>Ajans payı: {{ formatCurrency(transaction.commission.agency) }}</span>
