@@ -97,7 +97,7 @@ npm run dev
 
 Full system design and architectural decisions:
 
-👉 https://github.com/<your-username>/iceberg-crm-backend/blob/main/DESIGN.md
+👉 ./DESIGN.md
 
 ---
 
