@@ -6,6 +6,9 @@ This repository contains the frontend application of the Iceberg CRM system.
 
 It provides a user-friendly interface to manage properties, agents, and transactions, and to visualize the full transaction lifecycle and financial breakdown.
 
+Live Frontend:
+https://iceberg-crm.vercel.app/properties
+
 ---
 
 ## Tech Stack
