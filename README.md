@@ -1,91 +1,107 @@
-# Iceberg CRM Frontend
+# Iceberg CRM – Frontend
 
-Nuxt 3 tabanli bu repo, gayrimenkul satis surecini gorsellestiren CRM arayuzunu icerir. Uygulama; evleri liste gorunumunde, danismanlari kart gorunumunde ve satislari kanban gorunumunde yonetir.
+## Overview
 
-Bu repo sadece frontend uygulamasidir. Backend NestJS ve MongoDB servisi ayri bir repoda veya ayri bir calisma dizininde tutulabilir.
+This repository contains the frontend application of the Iceberg CRM system.
 
-## Ozellikler
+It provides a user-friendly interface to manage properties, agents, and transactions, and to visualize the full transaction lifecycle and financial breakdown.
 
-- Solda sabit sidebar ile evler, danismanlar ve satislar ekranlari
-- Aktif sekme vurgusu
-- Evler icin tablo ve mobil kart gorunumu
-- Danismanlar icin kart gorunumu
-- Satislar icin asama bazli kanban panosu
-- Her ekranda sabit `+` butonu ile yeni kayit olusturma
-- API erisilemezse demo veri ile arayuzun calismaya devam etmesi
+---
 
-## Teknolojiler
+## Tech Stack
 
-- Nuxt 3
-- Vue 3
-- Pinia
-- Tailwind CSS 4
-- Nuxt UI
+* Nuxt 3
+* Pinia (State Management)
+* Tailwind CSS
 
-## Gereksinimler
+---
 
-- Node.js LTS
-- npm veya pnpm
+## Core Features
 
-## Kurulum
+* Property management (table view)
+* Agent overview (card view)
+* Transaction tracking (kanban board)
+* Stage transition actions
+* Financial breakdown visualization
+* API integration with backend services
 
-```bash
-npm install
-```
+---
 
-Alternatif olarak:
+## Pages
 
-```bash
-pnpm install
-```
+* `/properties` → Property listing & management
+* `/agents` → Agent cards & overview
+* `/sales` → Transaction lifecycle (kanban)
+* `/` → redirect
 
-## Gelistirme
+---
 
-Varsayilan olarak frontend, backend API'sini `http://localhost:8080` adresinde bekler.
+## UI/UX Decisions
 
-Gelistirme sunucusunu baslatin:
+* Table view for properties (comparison-focused)
+* Card layout for agents (person-centric)
+* Kanban board for transactions (process tracking)
 
-```bash
-npm run dev
-```
+The kanban structure allows:
 
-Farkli bir API adresi kullanmak icin ortam degiskeni tanimlayin:
+* Clear visibility of transaction stages
+* Easy identification of bottlenecks
+* Fast operational actions
+
+---
+
+## State Management
+
+Pinia is used to:
+
+* Store agents, properties, and transactions
+* Handle API requests centrally
+* Manage stage updates
+* Provide fallback data in development
+
+---
+
+## API Integration
+
+This frontend consumes the backend API:
+
+👉 Backend Repository:
+https://github.com/thebilg/iceberg-backend
+
+Backend URL is configured from the frontend environment.
+
+Create a `.env` file in the project root:
 
 ```bash
 NUXT_PUBLIC_API_BASE=http://localhost:8080
 ```
 
-## Komutlar
+Nuxt exposes this value through `runtimeConfig.public.apiBase` and the API layer uses it as the base URL for backend requests.
+
+
+---
+
+## Running the Project
 
 ```bash
+npm install
 npm run dev
-npm run build
-npm run preview
-npm run lint
-npm run typecheck
 ```
 
-## Beklenen Backend Endpointleri
+---
 
-Frontend su endpointlerle haberlesir:
+## Design Document
 
-- `GET /agents`
-- `POST /agents`
-- `GET /properties`
-- `POST /properties`
-- `GET /transactions`
-- `POST /transactions`
-- `PATCH /transactions/:id/stage`
+Full system design and architectural decisions:
 
-## Sayfa Yapisi
+👉 https://github.com/<your-username>/iceberg-crm-backend/blob/main/DESIGN.md
 
-- `/properties`: Evlerin liste ekrani
-- `/agents`: Danisman kartlari
-- `/sales`: Kanban satis panosu
-- `/`: Otomatik olarak `/properties` sayfasina yonlenir
+---
 
-## Notlar
+## Notes
 
-- Backend bu repoda degildir.
-- API kapaliysa veya erisilemezse uygulama demo veri ile acilir.
-- Tasarim kararlarinin ayrintisi icin `DESIGN.md` dosyasina bakin.
+* Frontend is a presentation layer
+* All business logic lives in the backend
+* UI reflects backend-driven state
+
+---

@@ -1,145 +1,328 @@
-# Iceberg CRM Design Notes
+# Iceberg CRM – Design Document
 
-## Kapsam
+## 1. Overview
 
-Bu repo, technical case icin hazirlanan Nuxt 3 frontend uygulamasini icerir. Backend tarafinin NestJS ve MongoDB ile ayri bir repoda gelistirilmesi varsayilmistir. Frontend, backend servisleri uzerinden transaction lifecycle ve finansal dagilimi gosteren bir operasyon paneli olarak tasarlanmistir.
+This document describes the architectural decisions and design approach for the Iceberg CRM system.
 
-## Uygulama Hedefi
+The system is designed to manage real estate transactions, automate commission distribution, and provide full visibility into the transaction lifecycle.
 
-Arayuzun amaci su uc alanin tek bakista yonetilebilmesidir:
+The application consists of two main parts:
 
-- Portfoydeki evleri gormek ve yeni ilan eklemek
-- Danisman listesini ve kazanc bilgisini izlemek
-- Satislari asama bazli kanban uzerinden ilerletmek
+* A Nuxt 3 frontend application
+* A NestJS + MongoDB Atlas backend
 
-## Bilgi Mimarisi
+The goal of this document is not only to describe the current implementation, but also to clearly explain the reasoning behind key design decisions across the entire system.
 
-Sidebar navigasyonu uc ana bolum etrafinda kuruldu:
+---
 
-- `Evler`: operasyonun kaynak varligi oldugu icin tablo bazli gorunum secildi
-- `Danismanlar`: kisi bazli bilgi agirlikli oldugu icin kart gorunumu secildi
-- `Satislar`: surec yonetimi gerektirdigi icin kanban gorunumu secildi
+## 2. Design Principles
 
-Bu ayrim, ekranda kullanicinin hangi veri turuyle calistigini hemen anlamasini saglar.
+The following principles guided the design of the system:
 
-## State Management
+* **Domain-driven separation**: Agents, Properties, and Transactions are modeled as independent domains
+* **Single responsibility**: UI, business logic, data access, and validation are clearly separated
+* **Backend authority**: All critical business rules (commission, stage transitions) are enforced on the backend
+* **Frontend clarity**: The UI should make the system state immediately understandable
+* **Fault tolerance**: The application should remain usable even when API responses fail (development mode)
+* **Scalability**: The system should allow adding new stages, reports, or entities without major refactoring
 
-State yonetimi icin Pinia kullanildi.
+---
 
-`app/stores/crm.ts` icindeki store su sorumluluklari ustlenir:
+## 3. System Architecture
 
-- Agent, property ve transaction listelerini yuklemek
-- API yanitlarini UI icin normalize etmek
-- Yeni kayit olusturma aksiyonlarini yonetmek
-- Satis asamasi ilerletme islerini yonetmek
-- API yoksa demo veri ile fallback saglamak
+### Backend (NestJS)
 
-Bu tercih, sayfa bazli tekrar eden veri cekme ve donusum kodunu tek noktada toplar.
+The backend is responsible for:
 
-## API Stratejisi
+* Providing RESTful APIs
+* Managing data persistence via MongoDB Atlas
+* Validating input using DTOs and pipes
+* Enforcing transaction stage transitions
+* Calculating and storing commission distribution
+* Returning standardized error responses
 
-`app/composables/useApi.ts` hafif bir wrapper olarak kullanildi.
+### Frontend (Nuxt 3)
 
-Amac:
+The frontend is responsible for:
 
-- Ortak base URL kullanmak
-- `get`, `post`, `patch` aksiyonlarini tek yerden cagirmak
-- Frontend'i backend implementasyonundan fazla bagimsiz tutmak
+* Rendering operational data in a clear and structured way
+* Collecting user input and sending it to the API
+* Handling UI-level validation
+* Managing loading, empty, and error states
+* Visualizing transaction lifecycle and financial data
 
-Beklenen endpoint sozlesmesi:
+This separation ensures that the backend is the single source of truth, while the frontend remains a thin and predictable presentation layer.
 
-- `GET /agents`
-- `POST /agents`
-- `GET /properties`
-- `POST /properties`
-- `GET /transactions`
-- `POST /transactions`
-- `PATCH /transactions/:id/stage`
+---
 
-## Gorunum Kararlari
+## 4. Module Organization & Backend Structure
 
-### Sidebar
+The backend follows a domain-based modular structure:
 
-Sidebar sabit ve belirgin tutuldu. Aktif sekmenin renklenmesi, kullanicinin o anda hangi operasyon alaninda oldugunu netlestirir. Bu, kullanicinin ekranlar arasi geciste baglam kaybetmesini engeller.
+* `AgentsModule`
+* `PropertiesModule`
+* `TransactionsModule`
+* `ReportsModule`
+* `CommonModule`
 
-### Evler
+Each module includes:
 
-Evler sayfasinda masaustu icin tablo, mobil icin kart fallback'i kullanildi. Bunun nedeni ilan verisinin kolon bazli okunmasinin masaustunde daha verimli olmasidir.
+* `controller` → handles HTTP requests
+* `service` → contains business logic
+* `repository` → manages database operations
+* `dto` → defines validation rules
+* `schema` → defines MongoDB models
 
-### Danismanlar
+This structure prevents business logic from leaking into controllers and keeps responsibilities clearly separated.
 
-Danisman ekraninda kart yapisi tercih edildi. Iletisim bilgisi ve gelir bilgisi kisi merkezli oldugu icin kart yapisi daha dogrudan okunur.
+---
 
-### Satislar
+## 5. Data Modeling & Persistence Strategy
 
-Satis ekraninda kanban secildi. Technical case'in ana problemi lifecycle yonetimi oldugu icin asama bazli gorsellestirme en uygun modeldir.
+MongoDB Atlas was selected due to its flexibility and suitability for document-based data.
 
-## Olusturma Deneyimi
+### Core Collections
 
-Her ana ekranda sabit bir `+` butonu bulunur. Bu buton ekrana bagli olarak ilgili entity icin modal form acar:
+* `agents`
+* `properties`
+* `transactions`
 
-- Evler ekraninda yeni ev
-- Danismanlar ekraninda yeni danisman
-- Satislar ekraninda yeni satis
+### Transaction Structure
 
-Bu karar, kullanicinin sayfadan ayrilmadan hizli veri girebilmesini saglar.
+The `transaction` entity is central and includes:
 
-## Stage Handling
+* property reference
+* listing agent
+* selling agent
+* sale price
+* stage
+* commission breakdown
 
-Frontend tarafinda stage sirasini `app/composables/useStages.ts` dosyasi tanimlar:
+### Commission Storage Strategy (Key Decision)
 
-- `agreement`
-- `earnest_money`
-- `title_deed`
-- `completed`
+Commission data is stored **embedded within the transaction document**.
 
-Kanban kartlarinda yalnizca bir sonraki mantikli asamaya gecis onerilir. Bu sayede arayuz, gecisleri kontrollu bir siraya sokar. Gercek dogrulamanin backend tarafinda da yapilmasi beklenir.
+#### Rationale:
 
-## Finansal Gosterim
+* Acts as a **snapshot** of the financial outcome
+* Prevents inconsistencies if business rules change in the future
+* Enables fetching all relevant data in a single query
+* Avoids unnecessary complexity of separate collections
 
-Transaction kartinda asagidaki alanlar gosterilir:
+---
 
-- Toplam fiyat
-- Listing agent
-- Selling agent
-- Ajans komisyonu
-- Listing agent komisyonu
-- Selling agent komisyonu
+## 6. Transaction Lifecycle & Stage Management
 
-Bu dagilim transaction objesi icindeki `commission` alanindan okunur. Bu, frontend'in hesap mantigini tekrar kurmasini gerektirmez ve backend'i dogru hesaplamanin tek kaynagi yapar.
+### Stages
 
-## Hata ve Fallback Yaklasimi
+A transaction progresses through the following stages:
 
-API erisilemezse ekranin tamamen bos veya kirik acilmasi yerine demo veri ile acilmasi tercih edildi. Bu karar, arayuz gelistirme ve demo surecinde kullanisli bir fallback saglar. Uretim ortaminda backend baglantisi zorunlu tutulabilir.
+* `agreement`
+* `earnest_money`
+* `title_deed`
+* `completed`
 
-## Tasarim Dili
+### Decision: Strict Stage Transitions
 
-Renk paleti lila ve mor tonlari etrafinda kuruldu. Nedenleri:
+Invalid transitions are **explicitly blocked at the backend level**.
 
-- Sidebar aktif durumunu belirginlestirmek
-- Finansal dashboard duygusunu yumusatmak
-- Teknik case sunumunda daha ayirt edici bir gorunum elde etmek
+#### Rationale:
 
-Arkaplanda yumusak gradyan ve blur katmanlari kullanilarak arayuze daha olgun bir panel hissi verildi.
+* The workflow is linear and predictable
+* Prevents inconsistent system states
+* Ensures financial operations only occur at valid points
+* Frontend restrictions alone are not sufficient
 
-## Dosya Organizasyonu
+### Allowed Transitions
 
-- `app/app.vue`: genel shell
-- `app/components/layout/Sidebar.vue`: navigasyon
-- `app/components/ui/Fab.vue`: sabit olusturma butonu
-- `app/components/properties/Table.vue`: evler liste gorunumu
-- `app/components/agents/Cards.vue`: danisman kartlari
-- `app/components/sales/Kanban.vue`: kanban kolonlari
-- `app/components/sales/TransactionCard.vue`: satis karti
-- `app/stores/crm.ts`: merkezi state ve aksiyonlar
+* agreement → earnest_money
+* earnest_money → title_deed
+* title_deed → completed
 
-## Bilincli Sinirlar
+### Endpoint Design
 
-Bu repo icinde su alanlar tamamlanmamis veya bilerek disarida birakilmistir:
+Stage updates are handled via a dedicated endpoint:
 
-- Gercek backend implementasyonu
-- Authentication ve authorization
-- Unit testler
-- Deployment URL'leri
+PATCH /transactions/:id/stage
 
-Bu alanlar backend repo ve son teslim entegrasyonu ile tamamlanabilir.
+This separation is intentional because stage transitions include additional validation and side effects.
+
+### Side Effects
+
+* `earnest_money` → property status becomes `in_transaction`
+* `title_deed` → property remains `in_transaction`
+* `completed` →
+
+  * property status becomes `sold`
+  * commission is calculated and stored
+  * agent earnings are updated
+
+---
+
+## 7. Commission Calculation Logic
+
+### Formula
+
+* Total commission = 5% of sale price
+* 50% → agency
+* 50% → agent pool
+
+### Scenarios
+
+#### Scenario 1: Same Agent
+
+If the listing agent and selling agent are the same:
+
+* The agent receives 100% of the agent pool
+
+#### Scenario 2: Different Agents
+
+If they are different:
+
+* The agent pool is split equally (50/50)
+
+### When is it calculated?
+
+Commission is calculated **only when the transaction reaches `completed`**.
+
+#### Rationale:
+
+* Financial outcomes should only be finalized after completion
+* Prevents partial or invalid financial records
+* Ensures accurate reporting
+
+---
+
+## 8. API Design
+
+A RESTful approach is used with predictable and resource-oriented endpoints.
+
+### Transactions
+
+* GET /transactions
+* POST /transactions
+* PATCH /transactions/:id
+* PATCH /transactions/:id/stage
+
+### Design Decision
+
+Separating the stage endpoint allows:
+
+* Isolated validation logic
+* Clearer intent
+* Easier testing and auditing
+
+---
+
+## 9. Frontend Architecture & UI Decisions
+
+### Page Structure
+
+* `/properties` → property management
+* `/agents` → agent overview
+* `/sales` → transaction lifecycle (kanban board)
+
+### UI Patterns
+
+* Table view → properties (comparison-heavy data)
+* Card layout → agents (person-centric data)
+* Kanban board → transactions (process tracking)
+
+### Kanban Justification
+
+* Visualizes the lifecycle clearly
+* Highlights bottlenecks
+* Enables fast operational decisions
+
+---
+
+## 10. Dashboard Behavior
+
+* Data fetched via: GET /transactions
+* Each transaction is rendered as a card
+* Current stage is visually represented
+* Only valid next actions are enabled
+
+When a user triggers an action:
+
+* PATCH /transactions/:id/stage is called
+* Backend validates and processes the request
+* UI updates based on response
+
+---
+
+## 11. State Management
+
+Pinia is used for centralized state management.
+
+### Responsibilities
+
+* Store agents, properties, and transactions
+* Manage API interactions
+* Handle stage updates
+* Provide fallback data during development
+
+This reduces duplication and keeps data flow consistent across the app.
+
+---
+
+## 12. Validation & Error Handling
+
+### Backend
+
+* DTO-based validation
+* Global validation pipe
+* Whitelisting enabled
+* Standardized error format
+
+### Frontend
+
+* Form-level validation
+* Loading and empty states
+* API error handling
+
+---
+
+## 13. Trade-offs & Design Decisions
+
+### Embedded vs Dynamic Commission
+
+* Embedded chosen for consistency and auditability
+
+### Backend as Source of Truth
+
+* Prevents logic duplication
+* Ensures data integrity
+
+### Strict Stage Flow
+
+* Avoids invalid financial states
+* Simplifies reasoning about the system
+
+### Kanban UI
+
+* Best fit for stage-based workflows
+
+---
+
+## 14. Future Improvements
+
+* Authentication & authorization
+* Role-based access control
+* Audit logging
+* Soft delete strategy
+* Pagination & filtering
+* Advanced reporting using aggregation pipelines
+
+---
+
+## 15. Conclusion
+
+This system is designed with a strong focus on:
+
+* Clear domain separation
+* Centralized business logic
+* Predictable data flow
+* High data consistency
+
+The chosen architecture balances simplicity and scalability, providing a solid foundation for evolving into a production-ready CRM system.
